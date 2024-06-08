@@ -72,11 +72,11 @@ parts:
     #> renames built files in CRAFT_PART_INSTALL
     organize:
       # bin/: bin/
-      config/: /etc/cloudflared/
+      config/: etc/cloudflared/
 
     stage:
       - bin/*
-      - /etc/cloudflared/
+      - etc/cloudflared/
       # - -usr/bin/.gitkeep
 
     override-prime: |
