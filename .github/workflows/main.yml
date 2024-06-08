@@ -59,6 +59,8 @@ jobs:
       #     echo "Files at ===> main.workflow.job['build'].steps['Check action context']"
       #     ls -al
 
+      - uses: docker/setup-qemu-action@v1
+      #? https://github.com/marketplace/actions/snapcraft-multiarch-build#action-inputs
       - uses: diddlesnaps/snapcraft-multiarch-action@v1
         id: snapcraft
         with:
