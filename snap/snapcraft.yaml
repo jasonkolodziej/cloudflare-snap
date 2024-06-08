@@ -61,6 +61,10 @@ parts:
     source: https://github.com/cloudflare/cloudflared/releases/download/2024.6.0/cloudflared-linux-arm64.deb
     source-type: deb
 
+    override-build: |
+      craftctl default
+      ls -al $CRAFT_PART_INSTALL
+
   cloudflare-init:
     plugin: dump
     after:
@@ -82,8 +86,9 @@ parts:
     override-prime: |
       echo "PRIME Override ($CRAFT_PRIME):"
       craftctl default
+      mkdir -p $CRAFT_PRIME/bin
       ls -al $CRAFT_PRIME
-      # cp --archive --link --no-dereference -v $CRAFT_PRIME/usr/bin $CRAFT_PRIME
+      cp --archive --link --no-dereference -v $CRAFT_PRIME/usr/ $CRAFT_PRIME
 
 # System user for filters and backends to drop privileges, "lp" is not
 # available in a Snap
