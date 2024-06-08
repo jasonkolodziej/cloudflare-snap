@@ -8,4 +8,6 @@
 
 # TODO: fill out extra configuration hook parameters
 
+exec "$SNAP/bin/cloudflared" tunnel login
+
 exec $@

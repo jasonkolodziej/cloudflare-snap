@@ -21,14 +21,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        platform: [arm64, amd64]
+        platform: [arm64]
 
     #? The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
 
     env:
       #? > https://github.com/marketplace/actions/snapcraft-action#log-in
-      SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
+      # SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_TOKEN }}
       RELEASE_VERSION: ${{ github.event.client_payload.tag }}
       IS_NEW: ${{ github.event.client_payload.is_new }}
       EVENT_TYPE: ${{ github.event_name }}
@@ -59,45 +59,10 @@ jobs:
       #     echo "Files at ===> main.workflow.job['build'].steps['Check action context']"
       #     ls -al
 
-      - uses: actions/cache@v4
-        #* Try and restore a cached version if possibe
-        id: restore-cached
-        # continue-on-error: true
-        with:
-          path: ocis
-          key: ${{ env.CACHED_KEY }}-${{ matrix.platform }}-${{ hashFiles('ocis') }}
-          fail-on-cache-miss: true
-          restore-keys: ocis-${{ env.RELEASE_VERSION }}-${{ runner.os }}-${{ matrix.platform }}-
-
-      # #? Refrence: https://github.com/actions/cache/tree/main
-      # - uses: actions/cache/save@v4
-      #   #? https://github.com/actions/runner/blob/main/docs/adrs/0274-step-outcome-and-conclusion.md
-      #   if: ${{ steps.cached.outputs.cache-hit != 'true' && steps.grab.conclusion == 'success' }}
-      #   id: cache
-      #   with:
-      #     path: ocis
-      #     key: ${{ runner.os }}-ocis-${{ hashFiles('ocis') }}
-
-      - name: Status
-        id: status
-        run: |
-          ## echo "manual_dispatch:${{ env.MANUAL_EVENT }} event:${{ env.EVENT_TYPE }} is_new:${{ env.IS_NEW }} version:${{ env.RELEASE_VERSION }}"
-          echo "Files at ===> main.workflow.job['build'].steps['status']"
-          ls -al
-          echo "Moving cached binary to their src folder"
-          cp -p ./ocis ./src/ocis/bin/ocis
-          if [ -x "./src/ocis/bin/ocis" ]; then
-            echo "File is executable"
-          else
-            echo "File is being made executable"
-            chmod +x ./src/ocis/bin/ocis
-          fi
-
       - uses: diddlesnaps/snapcraft-multiarch-action@v1
-        # if: ${{ steps.restore-cached.outputs.cache-hit == 'true' }}
         id: snapcraft
         with:
-          store-auth: ${{ secrets.SNAPCRAFT_TOKEN }}
+          # store-auth: ${{ secrets.SNAPCRAFT_TOKEN }}
           architecture: ${{ matrix.platform }}
           #? Full execution log: '/root/.local/state/snapcraft/log/snapcraft-20240606-082202.271748.log'
           # snapcraft-args: #? --verbosity={quiet,brief,verbose}
@@ -105,42 +70,91 @@ jobs:
       - uses: actions/upload-artifact@v4
         id: uploadSnapArtifact
         with:
-          name: snap-${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
+          name: snap-2016-${{ matrix.platform }}
           path: ${{ steps.snapcraft.outputs.snap }}
 
-  #? Sets the release of this repository
-  release:
-    env:
-      #? Set the release tag relative to the tag_name provided by dispatcher.yml
-      RELEASE_TAG: ${{ github.event.client_payload.tag_name }}
-      RELEASE_VERSION: ${{ github.event.client_payload.tag }}
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      #? Required to release
-      contents: write
-    steps:
-      - name: Retrieve result from build
-        uses: actions/download-artifact@v4
-        id: results
-        with:
-          # name: snap-${{ env.RELEASE_TAG }}-${{  }}
-          #* pattern match the names
-          pattern: snap-${{ env.RELEASE_VERSION }}-*
-          merge-multiple: true
-      #? Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          ls -al
-          echo ${{ steps.results.outputs.download-path }}
-      #? Set your release
-      - name: GH Release
-        uses: softprops/action-gh-release@v2.0.5
-        with:
-          tag_name: ${{ env.RELEASE_TAG }}
-          #TODO: resolve setting a draft then detecting a draft
-          draft: true
-          prerelease: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          files: |
-            ${{ steps.results.outputs.download-path }}/*.snap
+  #     - uses: actions/cache@v4
+  #       #* Try and restore a cached version if possibe
+  #       id: restore-cached
+  #       # continue-on-error: true
+  #       with:
+  #         path: ocis
+  #         key: ${{ env.CACHED_KEY }}-${{ matrix.platform }}-${{ hashFiles('ocis') }}
+  #         fail-on-cache-miss: true
+  #         restore-keys: ocis-${{ env.RELEASE_VERSION }}-${{ runner.os }}-${{ matrix.platform }}-
+
+  #     # #? Refrence: https://github.com/actions/cache/tree/main
+  #     # - uses: actions/cache/save@v4
+  #     #   #? https://github.com/actions/runner/blob/main/docs/adrs/0274-step-outcome-and-conclusion.md
+  #     #   if: ${{ steps.cached.outputs.cache-hit != 'true' && steps.grab.conclusion == 'success' }}
+  #     #   id: cache
+  #     #   with:
+  #     #     path: ocis
+  #     #     key: ${{ runner.os }}-ocis-${{ hashFiles('ocis') }}
+
+  #     - name: Status
+  #       id: status
+  #       run: |
+  #         ## echo "manual_dispatch:${{ env.MANUAL_EVENT }} event:${{ env.EVENT_TYPE }} is_new:${{ env.IS_NEW }} version:${{ env.RELEASE_VERSION }}"
+  #         echo "Files at ===> main.workflow.job['build'].steps['status']"
+  #         ls -al
+  #         echo "Moving cached binary to their src folder"
+  #         cp -p ./ocis ./src/ocis/bin/ocis
+  #         if [ -x "./src/ocis/bin/ocis" ]; then
+  #           echo "File is executable"
+  #         else
+  #           echo "File is being made executable"
+  #           chmod +x ./src/ocis/bin/ocis
+  #         fi
+
+  #     - uses: diddlesnaps/snapcraft-multiarch-action@v1
+  #       # if: ${{ steps.restore-cached.outputs.cache-hit == 'true' }}
+  #       id: snapcraft
+  #       with:
+  #         store-auth: ${{ secrets.SNAPCRAFT_TOKEN }}
+  #         architecture: ${{ matrix.platform }}
+  #         #? Full execution log: '/root/.local/state/snapcraft/log/snapcraft-20240606-082202.271748.log'
+  #         # snapcraft-args: #? --verbosity={quiet,brief,verbose}
+
+  #     - uses: actions/upload-artifact@v4
+  #       id: uploadSnapArtifact
+  #       with:
+  #         name: snap-${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
+  #         path: ${{ steps.snapcraft.outputs.snap }}
+
+  # #? Sets the release of this repository
+  # release:
+  #   env:
+  #     #? Set the release tag relative to the tag_name provided by dispatcher.yml
+  #     RELEASE_TAG: ${{ github.event.client_payload.tag_name }}
+  #     RELEASE_VERSION: ${{ github.event.client_payload.tag }}
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     #? Required to release
+  #     contents: write
+  #   steps:
+  #     - name: Retrieve result from build
+  #       uses: actions/download-artifact@v4
+  #       id: results
+  #       with:
+  #         # name: snap-${{ env.RELEASE_TAG }}-${{  }}
+  #         #* pattern match the names
+  #         pattern: snap-${{ env.RELEASE_VERSION }}-*
+  #         merge-multiple: true
+  #     #? Runs a set of commands using the runners shell
+  #     - name: Run a multi-line script
+  #       run: |
+  #         ls -al
+  #         echo ${{ steps.results.outputs.download-path }}
+  #     #? Set your release
+  #     - name: GH Release
+  #       uses: softprops/action-gh-release@v2.0.5
+  #       with:
+  #         tag_name: ${{ env.RELEASE_TAG }}
+  #         #TODO: resolve setting a draft then detecting a draft
+  #         draft: true
+  #         prerelease: true
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         files: |
+  #           ${{ steps.results.outputs.download-path }}/*.snap

@@ -11,8 +11,70 @@
 #? apply the configuration changes, if necessary.
 
 #* an example of this is:
-# username="$(snapctl get username)"
-# password="$(snapctl get password)"
+
+# Define the domain you already have hosted on Cloudflare DNS
+CLOUDFLARE_DNS_NAME="$(snapctl get cloudflare-dns-name)" #? "YOUR.DOMAIN.COM"
+if [ -z "$CLOUDFLARE_DNS_NAME" ]; then
+    echo "Define the domain you already have hosted on Cloudflare DNS."
+    exit 1
+fi
+# Adapt your domain to GCP naming conventions
+TUNNEL_NAME="$(snapctl get gcp-dns-name)" #? "YOUR-DOMAIN-COM"
+if [ -z "$TUNNEL_NAME" ]; then
+    echo "Adapt your domain to GCP naming conventions for a tunnel."
+    exit 1
+fi
+# Define the static external IP for your GCP VM
+GCP_IP_ADDRESS="$(snapctl get ip-address)" #? "YOUR_STATIC_IP_ADDRESS"
+if [ -z "$GCP_IP_ADDRESS" ]; then
+    echo "Define the static external IP for your GCP VM."
+    exit 1
+fi
+# Define the service port you want forwarded on your VM this assumes you only have one
+SERVICE_PORT="$(snapctl get service-port)" #?"YOUR_SERVICE_PORT"
+if [ -z "$SERVICE_PORT" ]; then
+    echo "Define the service port you want forwarded on your VM this assumes you only have one."
+    exit 1
+fi
+
+# Define the service port you want forwarded on your VM this assumes you only have one
+SERVICE_PROTOCOL="$(snapctl get service-protocol)" #?"YOUR_SERVICE_PORT"
+if [ -z "$SERVICE_PROTOCOL" ]; then
+    echo "Define the service port you want forwarded on your VM this assumes you only have one."
+    exit 1
+fi
+
+# cloudflared tunnel login
+
+cloudflared tunnel create $GCP_DNS_NAME
+cloudflared tunnel route ip add $GCP_IP_ADDRESS/32 $GCP_DNS_NAME
+cloudflared tunnel route dns $GCP_DNS_NAME $CLOUDFLARE_DNS_NAME
+
+# cloudflared tunnel run --url localhost:PORT TUNNELNAME
+
+tunnel_id="$(cloudflared tunnel info $GCP_DNS_NAME | grep -oP 'Your tunnel \K([a-z0-9-]+)')"
+
+# Create config file
+#? Paths for: No file [config.yml config.yaml] in [~/.clouddflare-warp /etc/cloudflared /usr/local/etc/cloudflared]
+mkdir -mp 0600 $SNAP_DATA/etc/cloudflared
+
+# mkdir /etc/cloudflared
+echo "tunnel: $GCP_DNS_NAME" >$SNAP_DATA/etc/cloudflared/config.yml
+# "credentials-file: /root/.cloudflared/$tunnel_id.json"
+echo "credentials-file: ${SNAP_COMMON}/$tunnel_id.json" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "protocol: quic" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "logfile: $SNAP_DATA/var/log/cloudflared.log" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "loglevel: debug" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "transport-loglevel: info" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "ingress:" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "  - hostname: $CLOUDFLARE_DNS_NAME" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "    service: $PROTOCOL://localhost:$SERVICE_PORT" >>$SNAP_DATA/etc/cloudflared/config.yml
+echo "  - service: http_status:404" >>$SNAP_DATA/etc/cloudflared/config.yml
+
+cloudflared --config="$SNAP_DATA/etc/cloudflared/config.yml" service install
+
+# systemctl start cloudflared
+# systemctl status cloudflared
 
 # if [ -z "$username" -o -z "$password" ]; then
 #     echo "Username and password are required."

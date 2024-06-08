@@ -1,0 +1,10 @@
+tunnel: $GCP_DNS_NAME
+credentials-file: /root/.cloudflared/$tunnel_id.json
+protocol: quic
+logfile: /var/log/cloudflared.log
+loglevel: debug
+transport-loglevel: info
+ingress:
+  - hostname: $CLOUDFLARE_DNS_NAME
+    service: http://localhost:$SERVICE_PORT
+  - service: http_status:404
