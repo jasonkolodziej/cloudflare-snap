@@ -148,28 +148,6 @@ layout:
 #? Global environment variables
 environment:
   CONFIG_FILE: $SNAP_DATA/etc/cloudflared/config.yml
-#? Content slots - PRODUCERS
-#? Reference: https://snapcraft.io/docs/content-interface#heading--read-only
-# By default, the AppArmor sandbox allows writes to $SNAP_DATA and reads from $SNAP (see Environment variables for details).
-# The content interface takes advantage of this feature to map data from other locations to either $SNAP or $SNAP_DATA.
-# A bind mount is then created to link $SNAP in one snap (e.g. from /snap/my-snap/1234/content) to an empty directory in the other snap (e.g., to /snap/my-other-snap/4321/incoming-content).
-# Locations need to be selected carefully because a bind mount could potentially permit mounts over important locations, such as $SNAP_DATA, preventing access to a snap’s own writable space.
-# The same can be done for particular files, if desired, but it requires a pair of interfaces for each file and is more cumbersome.
-slots:
-  ocis-config:
-    interface: content
-    #? content (slot and plug): an arbitrary identifier for content type.
-    #? Defaults to either local slot name or local plug name for slot/plug definitions respectively.
-    content: ocis-config
-    #? source (slot): allows multiple directories to be exposed separately rather than grouped together
-    source:
-      #? write (slot): read and write paths to be exposed to a consuming snap
-      write:
-        - $OCIS_CONFIG_DIR
-      #? read (slot): read-only paths to be exposed to a consuming snap
-      read:
-        - $SNAP/bin
-        - $SNAP/etc/cloudflared
 
 # #? HOOKS
 # hooks:
