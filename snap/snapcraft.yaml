@@ -87,7 +87,7 @@ parts:
       echo "PRIME Override ($CRAFT_PRIME):"
       craftctl default
       mkdir -p $CRAFT_PRIME/bin
-      ls -al $CRAFT_PRIME
+      ls -al $CRAFT_PRIME/usr
       cp --archive --link --no-dereference -v $CRAFT_PRIME/usr/ $CRAFT_PRIME
 
 # System user for filters and backends to drop privileges, "lp" is not
