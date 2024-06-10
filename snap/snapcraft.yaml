@@ -86,9 +86,10 @@ parts:
     override-prime: |
       echo "PRIME Override ($CRAFT_PRIME):"
       craftctl default
-      mkdir -p $CRAFT_PRIME/bin
-      ls -al $CRAFT_PRIME/usr
-      cp --archive --link --no-dereference -v $CRAFT_PRIME/usr/ $CRAFT_PRIME
+      # mkdir -p $CRAFT_PRIME/bin
+      ln $CRAFT_PRIME/usr/bin $CRAFT_PRIME/bin
+      ls -al $CRAFT_PRIME/bin
+    #   # cp --archive --link --no-dereference -v $CRAFT_PRIME/usr/ $CRAFT_PRIME
 
 # System user for filters and backends to drop privileges, "lp" is not
 # available in a Snap
@@ -119,7 +120,7 @@ parts:
 #* type: tmpfs: mount a private temporary in-memory filesystem
 layout:
   /bin:
-    symlink: $SNAP/bin
+    symlink: $SNAP/usr/bin
   /usr/bin:
     symlink: $SNAP/usr/bin
     # bind: $SNAP/usr/bin/ocis
@@ -159,6 +160,7 @@ apps:
   ocis:
     command: bin/cloudflared
     daemon: simple
+    install-mode: disable
     restart-condition: always
     plugs:
       - network
