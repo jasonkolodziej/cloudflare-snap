@@ -86,8 +86,8 @@ parts:
     override-prime: |
       echo "PRIME Override ($CRAFT_PRIME):"
       craftctl default
-      # mkdir -p $CRAFT_PRIME/bin
-      ln $CRAFT_PRIME/usr/bin $CRAFT_PRIME/bin
+      mkdir -p $CRAFT_PRIME/bin
+      # ln $CRAFT_PRIME/usr/bin $CRAFT_PRIME/bin
       ls -al $CRAFT_PRIME
       ls -al $CRAFT_PRIME/bin
       ls -al $CRAFT_PRIME/usr/bin
